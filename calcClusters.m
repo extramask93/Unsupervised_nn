@@ -1,13 +1,14 @@
-function W=calcClusters(we,clNr,epochs)
-    n = 0.5;
-    n_scale = 0.5;
+function [W,WB]=calcClusters(we,clNr,epochs)
+    
+    n_scale = 0.90;
+    n_scale_scale = 0.003; %winner takes most
+    n= 0.5;
     %input normalization phase:
-    WE = normalize(we);
+    WE = (we - min(we))./(max(we) - min(we));
     %roll initial weights
     W = rand(clNr,size(WE,2));
-    W
-    %Winner takes all needs to calc dist of each point to each w
-    for e=1:50%epochs
+    WB = W;
+    for e=1:epochs%epochs
         distances = [];
         for i=1:size(WE,1)% for each sample
             sample = WE(i,:);
@@ -19,7 +20,13 @@ function W=calcClusters(we,clNr,epochs)
             min_index = find(distances(i,:) == min_val);
             %update given w with n*(X-W)
             W(min_index,:) = W(min_index,:) + n*(sample-W(min_index,:));
+            idx = distances(i,:) > min_val & distances(i,:) < min_val;
+            W(~idx,:) = W(~idx,:) + n*n_scale_scale*(sample-W(~idx,:));
+
         end
         n = n*n_scale;
     end
+    % de-normalize
+    W = W .* (max(we) - min(we))+min(we);
+    WB = WB .* (max(we) - min(we))+min(we);
 end
